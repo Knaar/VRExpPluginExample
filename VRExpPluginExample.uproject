@@ -32,10 +32,6 @@
 			]
 		},
 		{
-			"Name": "OnlineSubsystemSteam",
-			"Enabled": true
-		},
-		{
 			"Name": "OpenXRExpansionPlugin",
 			"Enabled": true,
 			"SupportedTargetPlatforms": [
@@ -63,6 +59,10 @@
 				"Android",
 				"HoloLens"
 			]
+		},
+		{
+			"Name": "AdvancedSteamSessions",
+			"Enabled": false
 		}
 	],
 	"TargetPlatforms": [
