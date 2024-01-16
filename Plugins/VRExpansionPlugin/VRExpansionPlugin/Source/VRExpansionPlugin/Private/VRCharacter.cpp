@@ -18,6 +18,8 @@
 
 DEFINE_LOG_CATEGORY(LogVRCharacter);
 
+class UStaticMeshComponent;
+
 AVRCharacter::AVRCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UVRRootComponent>(ACharacter::CapsuleComponentName).SetDefaultSubobjectClass<UVRCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
@@ -37,6 +39,14 @@ AVRCharacter::AVRCharacter(const FObjectInitializer& ObjectInitializer)
 		VRMovementReference = Cast<UVRBaseCharacterMovementComponent>(GetMovementComponent());
 		//AddTickPrerequisiteComponent(this->GetCharacterMovement());
 	}
+
+	LeftHandFirstPosition = FVector::ZeroVector;
+	LeftHandSecondPosition = FVector::ZeroVector;
+	LeftHandMovementSpeedState = 0.0f;
+
+	RightHandFirstPosition = FVector::ZeroVector;
+	RightHandSecondPosition = FVector::ZeroVector;
+	RightHandMovementSpeedState = 0.0f;
 }
 
 
@@ -192,6 +202,8 @@ void AVRCharacter::ExtendedSimpleMoveToLocation(const FVector& GoalLocation, flo
 	}
 }
 
+
+
 FVector AVRCharacter::GetTargetHeightOffset()
 {
 	return bRetainRoomscale ? FVector::ZeroVector : VRRootReference->GetTargetHeightOffset();
@@ -245,4 +257,73 @@ FVector AVRCharacter::GetProjectedVRLocation() const
 	{
 		return AVRBaseCharacter::GetProjectedVRLocation();
 	}
+}
+
+void AVRCharacter::InitSkeletalMeshes(USkeletalMeshComponent* LeftHand, USkeletalMeshComponent* RightHand)
+{
+	LeftHandMesh=LeftHand;
+	RightHandMesh= RightHand;
+}
+
+void AVRCharacter::UpdateMovement()
+{
+	if (LeftHandMesh)
+	{
+		FVector LHCurrentPosition = LeftHandMesh->GetComponentLocation();
+
+		if (!LeftHandFirstPosition.IsNearlyZero())
+		{
+			FVector LHMovementVector = LHCurrentPosition - LeftHandFirstPosition;
+			float LHSpeed = LHMovementVector.Size() / GetWorld()->GetDeltaSeconds();
+
+			// Интеграция логики SetSpeedState для левой руки
+			if (LHSpeed <= 10.0f)
+				LeftHandMovementSpeedState = 0.0f;
+			else if (LHSpeed <= 50.0f)
+				LeftHandMovementSpeedState = 0.1f + (LHSpeed - 10.0f) / 40.0f * 0.4f;
+			else if (LHSpeed <= 100.0f)
+				LeftHandMovementSpeedState = 0.5f + (LHSpeed - 50.0f) / 50.0f * 0.5f;
+			else
+				LeftHandMovementSpeedState = 1.0f;
+		}
+
+		LeftHandSecondPosition = LeftHandFirstPosition;
+		LeftHandFirstPosition = LHCurrentPosition;
+	}
+	if(RightHandMesh)
+	{
+		FVector RHCurrentPosition = RightHandMesh->GetComponentLocation();
+		
+		if (!RightHandFirstPosition.IsNearlyZero())
+		{
+			FVector RHMovementVector = RHCurrentPosition - RightHandFirstPosition;
+			float RHSpeed = (RHMovementVector.Size() / GetWorld()->GetDeltaSeconds())/2;
+
+			// Интеграция логики SetSpeedState для правой руки
+			if (RHSpeed <= 10.0f)
+				RightHandMovementSpeedState = 0.0f;
+			else if (RHSpeed <= 50.0f)
+				RightHandMovementSpeedState = 0.1f + (RHSpeed - 10.0f) / 40.0f * 0.4f;
+			else if (RHSpeed <= 100.0f)
+				RightHandMovementSpeedState = 0.5f + (RHSpeed - 50.0f) / 50.0f * 0.5f;
+			else
+				RightHandMovementSpeedState = 1.0f;
+		}
+		
+		RightHandSecondPosition=RightHandFirstPosition;
+		RightHandFirstPosition = RHCurrentPosition;
+	}
+}
+
+
+
+
+float AVRCharacter::GetLeftHandSpeed()
+{
+	return LeftHandMovementSpeedState;
+}
+
+float AVRCharacter::GetRightHandSpeed()
+{
+	return RightHandMovementSpeedState;
 }

@@ -5,6 +5,7 @@
 #include "VRBaseCharacter.h"
 #include "VRCharacter.generated.h"
 
+class UNavigationQueryFilter;
 class UVRRootComponent;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogVRCharacter, Log, All);
@@ -48,4 +49,29 @@ public:
 			bool bUsePathfinding = true, bool bProjectDestinationToNavigation = true, bool bCanStrafe = false,
 			TSubclassOf<UNavigationQueryFilter> FilterClass = NULL, bool bAllowPartialPath = true) override;
 
+public:
+	UFUNCTION(BlueprintCallable)
+	void InitSkeletalMeshes(USkeletalMeshComponent* LeftHandMesh, USkeletalMeshComponent* RightHandMesh);
+	
+	UFUNCTION(BlueprintCallable)
+	void UpdateMovement();
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	float GetLeftHandSpeed();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	float GetRightHandSpeed();
+	
+private:
+	FVector LeftHandFirstPosition;
+	FVector LeftHandSecondPosition;
+	float LeftHandMovementSpeedState;
+	
+	FVector RightHandFirstPosition;
+	FVector RightHandSecondPosition;
+	float RightHandMovementSpeedState;
+
+	USkeletalMeshComponent* LeftHandMesh;
+	USkeletalMeshComponent* RightHandMesh;
+	
 };
